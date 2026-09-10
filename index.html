@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0d6efd">
+<link rel="manifest" href="manifest.json">
+<title>Rekening BBCS</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+    margin:0;
+    font-family:Arial,sans-serif;
+    background:#f4f6f8;
+    color:#222;
+}
+header{
+    background:#0d6efd;
+    color:white;
+    padding:20px 15px;
+    text-align:center;
+}
+header h1{margin:0;font-size:22px}
+header p{margin:5px 0 0;font-size:14px}
+
+.container{
+    max-width:600px;
+    margin:auto;
+    padding:15px;
+}
+
+.card{
+    background:white;
+    border-radius:14px;
+    padding:18px;
+    margin-bottom:15px;
+    box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+
+.center{text-align:center}
+
+.identity{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    border-bottom:1px solid #ddd;
+    padding-bottom:12px;
+    margin-bottom:15px;
+}
+
+.label{
+    font-size:13px;
+    color:#777;
+}
+
+.value{
+    font-weight:bold;
+    margin-top:4px;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+}
+
+.item{
+    background:#f7f8fa;
+    padding:12px;
+    border-radius:10px;
+}
+
+.item strong{
+    display:block;
+    margin-top:5px;
+}
+
+button{
+    width:100%;
+    border:0;
+    border-radius:10px;
+    padding:13px;
+    margin-top:10px;
+    font-size:15px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.primary{background:#0d6efd;color:white}
+.secondary{background:#e9ecef;color:#222}
+
+.hidden{display:none}
+
+.status{
+    padding:12px;
+    border-radius:10px;
+    background:#fff3cd;
+    color:#664d03;
+    text-align:center;
+    margin-bottom:15px;
+}
+
+.transaction{
+    border-left:4px solid #0d6efd;
+    padding:10px 12px;
+    margin-bottom:10px;
+    background:#f8f9fa;
+    border-radius:0 8px 8px 0;
+}
+
+.transaction small{
+    color:#777;
+}
+
+.in{
+    color:#198754;
+    font-weight:bold;
+}
+
+.out{
+    color:#dc3545;
+    font-weight:bold;
+}
+
+#reader{
+    width:100%;
+    margin-top:15px;
+}
+
+.note{
+    font-size:13px;
+    color:#666;
+    line-height:1.5;
+}
+
+/* =====================================
+   SCANNER QR REKENING TERBARU
+===================================== */
+
+#readerAktivasi{
+    width:100%;
+    max-width:100%;
+    overflow:hidden;
+}
+
+.scanner-box{
+    width:100%;
+    max-width:100%;
+    margin-top:18px;
+    padding:12px;
+    border-radius:16px;
+    background:#f4f6f8;
+    border:1px solid #dfe3e8;
+    text-align:center;
+    overflow:hidden;
+}
+
+.scanner-box video{
+    display:block;
+    width:100%;
+    max-width:100%;
+    height:auto;
+    aspect-ratio:4 / 3;
+    margin:0;
+    border-radius:12px;
+    object-fit:cover;
+    background:#111;
+}
+
+.scanner-box p{
+    margin:12px 0;
+    font-size:14px;
+    line-height:1.5;
+}
+
+.scanner-box button{
+    width:100%;
+    max-width:100%;
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>BERKAH BERSAMA</h1>
+    <p>Core System</p>
+    <strong>REKENING ANGGOTA</strong>
+</header>
+
+<div class="container">
+
+    <!-- BELUM TERSINKRON -->
+    <section id="aktivasiPage">
+
+        <div class="card center">
+            <h2>🔄 Sinkronkan Rekening</h2>
+
+            <div class="status">
+                Rekening belum tersinkron
+            </div>
+
+            <p class="note">
+                Scan QR Rekening Terbaru yang ditampilkan oleh Admin BBCS.
+                QR ini dapat digunakan kembali setiap kali data rekening diperbarui.
+            </p>
+
+            <button class="primary" onclick="mulaiScanQRRekening()">
+                📷 SCAN QR REKENING TERBARU
+            </button>
+            <button class="secondary" type="button" onclick="pilihFotoQRRekening()">
+                🖼️ PILIH FOTO QR TERBARU
+            </button>
+            <input type="file" id="inputFotoQR" accept="image/*" style="display:none" onchange="bacaFotoQRRekening(this)">
+
+
+            <div id="readerAktivasi"></div>
+        </div>
+
+    </section>
+
+
+    <!-- REKENING -->
+    <section id="rekeningPage" class="hidden">
+
+        <div class="card">
+
+            <div class="identity">
+
+                <div>
+                    <div class="label">👤 Anggota</div>
+                    <div class="value" id="namaAnggota">-</div>
+                </div>
+
+                <div>
+                    <div class="label">🆔 ID Anggota</div>
+                    <div class="value" id="idAnggota">-</div>
+                </div>
+
+            </div>
+
+            <div class="center">
+                <div class="label">💳 Rekening</div>
+                <h2 id="noRekening">-</h2>
+            </div>
+
+            <div class="grid">
+
+                <div class="item">
+                    Simpanan Pokok
+                    <strong id="simpananPokok">Rp 0</strong>
+                </div>
+
+                <div class="item">
+                    Simpanan Wajib
+                    <strong id="simpananWajib">Rp 0</strong>
+                </div>
+
+                <div class="item">
+                    Simpanan Sukarela
+                    <strong id="simpananSukarela">Rp 0</strong>
+                </div>
+
+                <div class="item">
+                    Pinjaman Aktif
+                    <strong id="pinjamanAktif">Rp 0</strong>
+                </div>
+
+                <div class="item">
+                    Total Simpanan
+                    <strong id="totalSimpanan">Rp 0</strong>
+                </div>
+
+                <div class="item">
+                    Sisa Pokok Pinjaman
+                    <strong id="sisaPokok">Rp 0</strong>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="card center">
+
+            <h3>🔄 Sinkronisasi Rekening</h3>
+
+            <p class="note">
+                Gunakan QR Rekening Terbaru dari Admin BBCS
+                untuk memperbarui data rekening.
+            </p>
+
+            <button
+                class="primary"
+                type="button"
+                onclick="mulaiScanQRRekeningAktif()"
+            >
+                📷 SCAN QR REKENING TERBARU
+            </button>
+
+            <button
+                class="secondary"
+                type="button"
+                onclick="pilihFotoQRRekeningAktif()"
+            >
+                🖼️ PILIH FOTO QR TERBARU
+            </button>
+
+            <input
+                type="file"
+                id="inputFotoQRAktif"
+                accept="image/*"
+                style="display:none"
+                onchange="bacaFotoQRRekeningAktif(this)"
+            >
+
+            <div id="readerQRRekeningAktif"></div>
+
+        </div>
+
+
+        <div class="card">
+
+            <h3>📜 Riwayat Transaksi</h3>
+
+            <div id="riwayat">
+                Belum ada transaksi.
+            </div>
+
+        </div>
+
+    </section>
+
+</div>
+
+
+<script>
+
+/* =====================================================
+   REKENING BBCS - SATU FILE
+   ===================================================== */
+
+const KEY_REKENING = "bbcs_rekening_anggota";
+
+let rekening = null;
+
+
+/* FORMAT RUPIAH */
+function rupiah(angka){
+    return "Rp " + Number(angka || 0).toLocaleString("id-ID");
+}
+
+
+/* LOAD DATA */
+function loadRekening(){
+
+    const data = localStorage.getItem(KEY_REKENING);
+
+    if(!data){
+        tampilBelumTerhubung();
+        return;
+    }
+
+    try{
+        rekening = JSON.parse(data);
+
+        if(
+            rekening &&
+            rekening.idAnggota &&
+            rekening.nama
+        ){
+            tampilRekening();
+        }else{
+            localStorage.removeItem(KEY_REKENING);
+            tampilBelumTerhubung();
+        }
+
+    }catch(e){
+
+        localStorage.removeItem(KEY_REKENING);
+        tampilBelumTerhubung();
+
+    }
+}
+
+
+/* BELUM TERSINKRON */
+function tampilBelumTerhubung(){
+
+    document
+        .getElementById("aktivasiPage")
+        .classList.remove("hidden");
+
+    document
+        .getElementById("rekeningPage")
+        .classList.add("hidden");
+}
+
+
+/* SUDAH TERHUBUNG */
+function tampilRekening(){
+
+    document
+        .getElementById("aktivasiPage")
+        .classList.add("hidden");
+
+    document
+        .getElementById("rekeningPage")
+        .classList.remove("hidden");
+
+
+    document.getElementById("namaAnggota").textContent =
+        rekening.nama || "-";
+
+    document.getElementById("idAnggota").textContent =
+        rekening.idAnggota || "-";
+
+    document.getElementById("noRekening").textContent =
+        rekening.noRekening || rekening.idAnggota || "-";
+
+
+    document.getElementById("simpananPokok").textContent =
+        rupiah(rekening.simpananPokok);
+
+    document.getElementById("simpananWajib").textContent =
+        rupiah(rekening.simpananWajib);
+
+    document.getElementById("simpananSukarela").textContent =
+        rupiah(rekening.simpananSukarela);
+
+    document.getElementById("pinjamanAktif").textContent =
+        rupiah(rekening.pinjamanAktif);
+
+    document.getElementById("totalSimpanan").textContent =
+        rupiah(
+            Number(rekening.simpananPokok || 0) +
+            Number(rekening.simpananWajib || 0) +
+            Number(rekening.simpananSukarela || 0)
+        );
+
+    document.getElementById("sisaPokok").textContent =
+        rupiah(rekening.sisaPokok);
+
+    tampilRiwayat();
+}
+
+
+/* =====================================================
+   QR REKENING TERBARU
+   ===================================================== */
+
+function pilihFotoQRRekening(){
+    const input = document.getElementById("inputFotoQR");
+    if(input){
+        input.value = "";
+        input.click();
+    }
+}
+
+async function bacaFotoQRRekening(input){
+    const file = input && input.files ? input.files[0] : null;
+    if(!file){ return; }
+
+    if(typeof BarcodeDetector === "undefined"){
+        alert("Browser tidak mendukung pembacaan QR dari foto.");
+        return;
+    }
+
+    try{
+        const gambar = await createImageBitmap(file);
+        const detector = new BarcodeDetector({formats:["qr_code"]});
+        const hasil = await detector.detect(gambar);
+        gambar.close();
+
+        if(!hasil || hasil.length === 0){
+            alert("QR tidak ditemukan pada foto.\n\nPilih foto QR Rekening Terbaru BBCS yang terlihat jelas.");
+            return;
+        }
+
+        const isi = hasil[0].rawValue;
+        prosesQRRekening(isi);
+
+    }catch(error){
+        console.error("QR Foto:", error);
+        alert(
+            "Foto QR tidak dapat dibaca.\n\n" +
+            "Nama Error: " + (error.name || "-") +
+            "\nPesan: " + (error.message || "-")
+        );
+    }
+}
+
+function mulaiScanQRRekening(){
+
+    const reader =
+        document.getElementById("readerAktivasi");
+
+    if(!reader){
+
+        alert("Area scanner tidak ditemukan");
+
+        return;
+
+    }
+
+    reader.innerHTML = `
+        <div class="scanner-box">
+
+            <video
+                id="videoQR"
+                autoplay
+                playsinline
+            ></video>
+
+            <p>
+                📷 Arahkan kamera ke QR Rekening Terbaru Admin
+            </p>
+
+            <button
+                class="secondary"
+                type="button"
+                onclick="tutupScanner()"
+            >
+                ✖ TUTUP KAMERA
+            </button>
+
+        </div>
+    `;
+
+    mulaiKameraQR();
+
+}
+
+
+/* =====================================================
+   MESIN SCANNER QR
+   ===================================================== */
+
+let streamQR = null;
+let scanningQR = false;
+
+async function mulaiKameraQR(){
+
+    const video =
+        document.getElementById("videoQR");
+
+    if(!video){
+        return;
+    }
+
+    if(typeof BarcodeDetector === "undefined"){
+
+        alert(
+            "Browser tidak mendukung QR Scanner"
+        );
+
+        return;
+
+    }
+
+    try{
+
+        streamQR =
+            await navigator.mediaDevices.getUserMedia({
+                video:{
+                    facingMode:{
+                        ideal:"environment"
+                    }
+                },
+                audio:false
+            });
+
+        video.srcObject = streamQR;
+
+        scanningQR = true;
+
+        const detector =
+            new BarcodeDetector({
+                formats:["qr_code"]
+            });
+
+        bacaQR(video, detector);
+
+    }
+    catch(error){
+
+        console.error(
+            "Kamera QR:",
+            error
+        );
+
+        alert(
+            "KAMERA GAGAL DIBUKA\\n\\n" +
+            "Nama Error: " + (error.name || "-") +
+            "\\nPesan: " + (error.message || "-")
+        );
+
+    }
+
+}
+
+async function bacaQR(video, detector){
+
+    if(!scanningQR){
+        return;
+    }
+
+    try{
+
+        if(video.readyState >= 2){
+
+            const hasil =
+                await detector.detect(video);
+
+            if(hasil.length){
+
+                const isi =
+                    hasil[0].rawValue;
+
+                scanningQR = false;
+
+                tutupScanner();
+
+                prosesQRRekening(isi);
+
+                return;
+
+            }
+
+        }
+
+    }
+    catch(error){
+
+        console.warn(
+            "Pembacaan QR:",
+            error
+        );
+
+    }
+
+    requestAnimationFrame(function(){
+
+        bacaQR(
+            video,
+            detector
+        );
+
+    });
+
+}
+
+function tutupScanner(){
+
+    scanningQR = false;
+
+    if(streamQR){
+
+        streamQR
+            .getTracks()
+            .forEach(function(track){
+
+                track.stop();
+
+            });
+
+        streamQR = null;
+
+    }
+
+    const video =
+        document.getElementById("videoQR");
+
+    if(video){
+
+        video.srcObject = null;
+
+    }
+
+    const readerAktivasi =
+        document.getElementById(
+            "readerAktivasi"
+        );
+
+    if(readerAktivasi){
+
+        readerAktivasi.innerHTML = "";
+
+    }
+
+    const readerAktif =
+        document.getElementById(
+            "readerQRRekeningAktif"
+        );
+
+    if(readerAktif){
+
+        readerAktif.innerHTML = "";
+
+    }
+
+}
+
+
+/* =====================================================
+   QR REKENING TERBARU - HALAMAN AKTIF
+   ===================================================== */
+
+function mulaiScanQRRekeningAktif(){
+
+    const reader =
+        document.getElementById("readerQRRekeningAktif");
+
+    if(!reader){
+        alert("Area scanner rekening tidak ditemukan");
+        return;
+    }
+
+    reader.innerHTML = `
+        <div class="scanner-box">
+
+            <video
+                id="videoQR"
+                autoplay
+                playsinline
+            ></video>
+
+            <p>
+                📷 Arahkan kamera ke QR Rekening Terbaru Admin
+            </p>
+
+            <button
+                class="secondary"
+                type="button"
+                onclick="tutupScanner()"
+            >
+                ✖ TUTUP KAMERA
+            </button>
+
+        </div>
+    `;
+
+    mulaiKameraQR();
+
+}
+
+
+function pilihFotoQRRekeningAktif(){
+
+    const input =
+        document.getElementById("inputFotoQRAktif");
+
+    if(input){
+        input.value = "";
+        input.click();
+    }
+
+}
+
+
+async function bacaFotoQRRekeningAktif(input){
+
+    const file =
+        input && input.files
+            ? input.files[0]
+            : null;
+
+    if(!file){
+        return;
+    }
+
+    if(typeof BarcodeDetector === "undefined"){
+
+        alert(
+            "Browser tidak mendukung pembacaan QR dari foto."
+        );
+
+        return;
+    }
+
+    try{
+
+        const gambar =
+            await createImageBitmap(file);
+
+        const detector =
+            new BarcodeDetector({
+                formats:["qr_code"]
+            });
+
+        const hasil =
+            await detector.detect(gambar);
+
+        gambar.close();
+
+        if(!hasil || hasil.length === 0){
+
+            alert(
+                "QR tidak ditemukan pada foto.\n\n" +
+                "Pilih foto QR Rekening Terbaru BBCS yang terlihat jelas."
+            );
+
+            return;
+        }
+
+        const isi =
+            hasil[0].rawValue;
+
+        prosesQRRekening(isi);
+
+    }catch(error){
+
+        console.error(
+            "QR Foto Rekening:",
+            error
+        );
+
+        alert(
+            "Foto QR tidak dapat dibaca.\n\n" +
+            "Nama Error: " +
+            (error.name || "-") +
+            "\nPesan: " +
+            (error.message || "-")
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   PROSES QR REKENING TERBARU
+   ===================================================== */
+
+function prosesQRRekening(isi){
+
+    try{
+
+        const data = JSON.parse(isi);
+
+        /* =========================================
+           VALIDASI FORMAT QR
+           ========================================= */
+
+        if(
+            !data ||
+            (
+                data.type !== "AKTIVASI" &&
+                data.type !== "REKENING_BBCS"
+            )
+        ){
+
+            alert(
+                "QR tidak valid.\n\n" +
+                "Gunakan QR Rekening resmi dari Admin BBCS."
+            );
+
+            return;
+        }
+
+
+        /* =========================================
+           VALIDASI ID ANGGOTA
+           ========================================= */
+
+        if(!data.idAnggota){
+
+            alert(
+                "QR tidak memiliki ID Anggota."
+            );
+
+            return;
+        }
+
+
+        if(!data.nama){
+
+            alert(
+                "QR tidak memiliki data nama anggota."
+            );
+
+            return;
+        }
+
+
+        const idQR =
+            String(data.idAnggota).trim();
+
+
+        /* =========================================
+           CEK REKENING YANG SUDAH TERSIMPAN
+           ========================================= */
+
+        const rekeningLama =
+            rekening &&
+            rekening.idAnggota
+                ? String(rekening.idAnggota).trim()
+                : "";
+
+
+        /*
+         * Jika rekening sudah aktif,
+         * QR WAJIB milik anggota yang sama.
+         */
+
+        if(
+            rekeningLama &&
+            rekeningLama !== idQR
+        ){
+
+            alert(
+                "QR TIDAK SESUAI.\n\n" +
+                "QR ini milik anggota:\n" +
+                String(data.nama) +
+                "\n\n" +
+                "Rekening pada perangkat ini:\n" +
+                String(rekening.nama || "-") +
+                "\n\n" +
+                "Gunakan QR rekening anggota yang benar."
+            );
+
+            return;
+        }
+
+
+        /* =========================================
+           BENTUK DATA REKENING TERBARU
+           ========================================= */
+
+        const rekeningBaru = {
+
+            idAnggota:
+                idQR,
+
+            nama:
+                String(data.nama).trim(),
+
+            noRekening:
+                data.noRekening || data.idAnggota,
+
+            simpananPokok:
+                Number(data.simpananPokok || 0),
+
+            simpananWajib:
+                Number(data.simpananWajib || 0),
+
+            simpananSukarela:
+                Number(data.simpananSukarela || 0),
+
+            pinjamanAktif:
+                Number(data.pinjamanAktif || 0),
+
+            sisaPokok:
+                Number(data.sisaPokok || 0),
+
+            riwayat:
+                Array.isArray(data.riwayat)
+                    ? data.riwayat
+                    : [],
+
+            aktif:
+                true,
+
+            versiData:
+                data.versi || "1.0",
+
+            waktuSinkronisasi:
+                new Date().toISOString()
+
+        };
+
+
+        /* =========================================
+           SIMPAN DATA
+           ========================================= */
+
+        localStorage.setItem(
+            KEY_REKENING,
+            JSON.stringify(rekeningBaru)
+        );
+
+        rekening = rekeningBaru;
+
+
+        /* =========================================
+           PESAN BERDASARKAN MODE
+           ========================================= */
+
+        if(rekeningLama){
+
+            alert(
+                "Sinkronisasi Berhasil.\n\n" +
+                "Data rekening terbaru sudah diterima dari Admin BBCS.\n\n" +
+                "Nama: " +
+                rekeningBaru.nama +
+                "\nID Anggota: " +
+                rekeningBaru.idAnggota
+            );
+
+        }else{
+
+            alert(
+                "Sinkronisasi Rekening Berhasil.\n\n" +
+                "Nama: " +
+                rekeningBaru.nama +
+                "\nID Anggota: " +
+                rekeningBaru.idAnggota
+            );
+
+        }
+
+
+        /* =========================================
+           TAMPILKAN DATA TERBARU
+           ========================================= */
+
+        tampilRekening();
+
+
+    }catch(error){
+
+        console.error(
+            "QR Rekening BBCS:",
+            error
+        );
+
+        alert(
+            "QR tidak dapat dibaca.\n\n" +
+            "Pastikan QR berasal dari Rekening BBCS Admin."
+        );
+
+    }
+
+}
+
+/* =====================================================
+   RIWAYAT
+   ===================================================== */
+
+function tampilRiwayat(){
+
+    const box =
+        document.getElementById("riwayat");
+
+    const data =
+        rekening.riwayat || [];
+
+    if(!data.length){
+
+        box.innerHTML =
+            "Belum ada transaksi.";
+
+        return;
+    }
+
+    box.innerHTML =
+        data.map(t => {
+
+            const masuk =
+                t.jenis === "Pemasukan";
+
+            return `
+                <div class="transaction">
+
+                    <small>${t.tanggal || "-"}</small>
+
+                    <div class="${masuk ? "in" : "out"}">
+                        ${masuk ? "Pemasukan" : "Pengeluaran"}
+                    </div>
+
+                    <div>
+                        ${t.keterangan || "-"}
+                    </div>
+
+                    <strong>
+                        ${rupiah(Number(t.jumlah || 0))}
+                    </strong>
+
+                    <small>
+                        Ref: ${t.referensi || "-"}
+                    </small>
+
+                </div>
+            `;
+
+        }).join("");
+
+}
+
+
+/* JALANKAN */
+loadRekening();
+
+if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js")
+            .then(() => console.log("Rekening BBCS Service Worker aktif"))
+            .catch(err => console.error("Service Worker gagal:", err));
+    });
+}
+
+</script>
+
+</body>
+</html>
