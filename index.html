@@ -459,31 +459,119 @@ function pilihFotoQRRekening(){
     }
 }
 
-async function bacaFotoQRRekening(input){
-    const file = input && input.files ? input.files[0] : null;
-    if(!file){ return; }
 
-    if(typeof BarcodeDetector === "undefined"){
-        alert("Browser tidak mendukung pembacaan QR dari foto.");
-        return;
+/* =====================================================
+   PEMBACA FOTO QR DENGAN METODE CADANGAN
+   Tidak mengubah penyimpanan rekening.
+   ===================================================== */
+
+async function bacaIsiQRDariFoto(file) {
+    if (!file) return null;
+
+    if (typeof BarcodeDetector === "undefined") {
+        throw new Error(
+            "Browser tidak menyediakan BarcodeDetector."
+        );
     }
 
-    try{
-        const gambar = await createImageBitmap(file);
-        const detector = new BarcodeDetector({formats:["qr_code"]});
-        const hasil = await detector.detect(gambar);
-        gambar.close();
+    const detector = new BarcodeDetector({
+        formats: ["qr_code"]
+    });
 
-        if(!hasil || hasil.length === 0){
-            alert("QR tidak ditemukan pada foto.\n\nPilih foto QR Rekening Terbaru BBCS yang terlihat jelas.");
+    // Metode pertama: coba membaca gambar sebagai ImageBitmap.
+    try {
+        if (typeof createImageBitmap === "function") {
+            let bitmap = null;
+
+            try {
+                bitmap = await createImageBitmap(file);
+                const hasil = await detector.detect(bitmap);
+
+                if (hasil && hasil.length > 0) {
+                    return hasil[0].rawValue;
+                }
+            } finally {
+                if (bitmap && typeof bitmap.close === "function") {
+                    bitmap.close();
+                }
+            }
+        }
+    } catch (error) {
+        console.warn(
+            "Pembacaan ImageBitmap gagal; mencoba metode gambar:",
+            error
+        );
+    }
+
+    // Metode cadangan: muat gambar melalui Image dan canvas.
+    const url = URL.createObjectURL(file);
+
+    try {
+        const gambar = new Image();
+
+        await new Promise((resolve, reject) => {
+            gambar.onload = resolve;
+            gambar.onerror = () => reject(
+                new Error(
+                    "Browser gagal membuka gambar dari galeri."
+                )
+            );
+            gambar.src = url;
+        });
+
+        if (!gambar.naturalWidth || !gambar.naturalHeight) {
+            throw new Error(
+                "Ukuran gambar tidak dapat dibaca browser."
+            );
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = gambar.naturalWidth;
+        canvas.height = gambar.naturalHeight;
+
+        const konteks = canvas.getContext("2d");
+
+        if (!konteks) {
+            throw new Error(
+                "Canvas tidak tersedia untuk membaca gambar."
+            );
+        }
+
+        konteks.drawImage(gambar, 0, 0);
+
+        const hasil = await detector.detect(canvas);
+
+        if (hasil && hasil.length > 0) {
+            return hasil[0].rawValue;
+        }
+
+        return null;
+    } finally {
+        URL.revokeObjectURL(url);
+    }
+}
+
+
+async function bacaFotoQRRekening(input) {
+    const file = input && input.files ? input.files[0] : null;
+    if (!file) return;
+
+    try {
+        const isi = await bacaIsiQRDariFoto(file);
+
+        if (!isi) {
+            alert(
+                "QR tidak ditemukan pada foto.\n\n" +
+                "Pilih foto QR Rekening Terbaru BBCS yang terlihat jelas."
+            );
             return;
         }
 
-        const isi = hasil[0].rawValue;
         prosesQRRekening(isi);
 
-    }catch(error){
+    } catch (error) {
         console.error("QR Foto:", error);
+
         alert(
             "Foto QR tidak dapat dibaca.\n\n" +
             "Nama Error: " + (error.name || "-") +
@@ -760,73 +848,33 @@ function pilihFotoQRRekeningAktif(){
 }
 
 
-async function bacaFotoQRRekeningAktif(input){
 
-    const file =
-        input && input.files
-            ? input.files[0]
-            : null;
+async function bacaFotoQRRekeningAktif(input) {
+    const file = input && input.files ? input.files[0] : null;
+    if (!file) return;
 
-    if(!file){
-        return;
-    }
+    try {
+        const isi = await bacaIsiQRDariFoto(file);
 
-    if(typeof BarcodeDetector === "undefined"){
-
-        alert(
-            "Browser tidak mendukung pembacaan QR dari foto."
-        );
-
-        return;
-    }
-
-    try{
-
-        const gambar =
-            await createImageBitmap(file);
-
-        const detector =
-            new BarcodeDetector({
-                formats:["qr_code"]
-            });
-
-        const hasil =
-            await detector.detect(gambar);
-
-        gambar.close();
-
-        if(!hasil || hasil.length === 0){
-
+        if (!isi) {
             alert(
                 "QR tidak ditemukan pada foto.\n\n" +
                 "Pilih foto QR Rekening Terbaru BBCS yang terlihat jelas."
             );
-
             return;
         }
 
-        const isi =
-            hasil[0].rawValue;
-
         prosesQRRekening(isi);
 
-    }catch(error){
-
-        console.error(
-            "QR Foto Rekening:",
-            error
-        );
+    } catch (error) {
+        console.error("QR Foto Rekening:", error);
 
         alert(
             "Foto QR tidak dapat dibaca.\n\n" +
-            "Nama Error: " +
-            (error.name || "-") +
-            "\nPesan: " +
-            (error.message || "-")
+            "Nama Error: " + (error.name || "-") +
+            "\nPesan: " + (error.message || "-")
         );
-
     }
-
 }
 
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = "rekening-bbcs-v11";
+const CACHE_NAME = "rekening-bbcs-v12";
 
 const FILES = [
   "./",
